@@ -7,7 +7,7 @@ from datetime import date
 import calendar
 import streamlit as st
 import streamlit_option_menu as stm
-
+import altair as alt
 
 #---------------------------------------------------------------------------------------------------
 ## FUNZIONI
@@ -110,102 +110,105 @@ if selected == 'Homepage':
 
   st.title('Verona Card - Homepage')
 
-  st.header('Introduction')
-  st.write('''
-          VeronaCard is a cumulative ticket released by Comune di Verona, which allows to have a 
-          series of advantages for discovering many of the artistic and historical points of interest of 
-          our beautiful city, Verona. In particular, it allows to have free or reduced entry to the city main
-          museums, monuments and churches together with free city bus travel.
-          ''')
-  st.write('''
-          Here where the advantages are guaranteed:
-          ''')
-  c1, c2 = st.columns([1,1])
-  c1.write('''
-            * Arena
-            * Arena Museo Opera (AMO)
-            * Basilica di San Zeno
-            * Basilica di Santa Anastasia
-            * Casa di Giulietta
-            * Castelvecchio
-            * Centro di Fotografia
-            * Chiesa di San Fermo
-            * Duomo
-            * Giardino Giusti
-            * Museo Africano
+  with st.container():
+    st.header('Introduction')
+    st.write('''
+            VeronaCard is a cumulative ticket released by Comune di Verona, which allows to have a 
+            series of advantages for discovering many of the artistic and historical points of interest of 
+            our beautiful city, Verona. In particular, it allows to have free or reduced entry to the city main
+            museums, monuments and churches together with free city bus travel.
             ''')
-  c2.write('''
-            * Museo Conte
-            * Museo della Radio Epoca
-            * Museo di Storia Naturale
-            * Museo Lapidario Maffeiano
-            * Museo Miniscalchi
-            * Palazzo della Ragione            
-            * Sightseeing
-            * Teatro Romano
-            * Tomba di Giulietta
-            * Torre dei Lamberti
-            * Verona Tour
+    st.write('''
+            Here where the advantages are guaranteed:
+            ''')
+    c1, c2 = st.columns([1,1])
+    c1.write('''
+              * Arena
+              * Arena Museo Opera (AMO)
+              * Basilica di San Zeno
+              * Basilica di Santa Anastasia
+              * Casa di Giulietta
+              * Castelvecchio
+              * Centro di Fotografia
+              * Chiesa di San Fermo
+              * Duomo
+              * Giardino Giusti
+              * Museo Africano
+              ''')
+    c2.write('''
+              * Museo Conte
+              * Museo della Radio Epoca
+              * Museo di Storia Naturale
+              * Museo Lapidario Maffeiano
+              * Museo Miniscalchi
+              * Palazzo della Ragione            
+              * Sightseeing
+              * Teatro Romano
+              * Tomba di Giulietta
+              * Torre dei Lamberti
+              * Verona Tour
+              ''')
+  
+  with st.container():
+    st.header('Topics')
+    st.write('''
+            What are the purposes of this project? This project wants to analyze the usage of the VeronaCards 
+            in order to reach some conclusions on what is the behaviour of the affluences in different periods of time and different site. 
+            More precisely, the purposes of the project are:
+            * understanding how affluences changes depending on the **day of the week**
+            * understanding how affluences changes depending on the **year**
+            * understanding how affluences changes depending on the **month**
+            * understanding how affluences changes depending on a **specified date**
+            * understanding how affluences changes depending on the **site**
+            * foretelling the affluences of 2021 per units of time and per site
+            ''')
+  
+  with st.container():
+    st.header('Datasets')
+    st.write('''
+            In order to analyze the usage of the VeronaCards through the years
+            the datasets from 2014 to 2020 has been downloaded from the link: 
+            https://dati.veneto.it/catalogo-opendata/comune_di_verona_311.
+            ''')  
+    st.write('''
+            This is how they looks:
             ''')
 
-  st.header('Topics')
-  st.write('''
-          What are the purposes of this project? This project wants to analyze the usage of the VeronaCards 
-          in order to reach some conclusions on what is the behaviour of the affluences in different periods of time and different site. 
-          More precisely, the purposes of the project are:
-          * understanding how affluences changes depending on the **day of the week**
-          * understanding how affluences changes depending on the **year**
-          * understanding how affluences changes depending on the **month**
-          * understanding how affluences changes depending on a **specified date**
-          * understanding how affluences changes depending on the **site**
-          * foretelling the affluences of 2021 per units of time and per site
-          ''')
+    ## CARICAMENTO DEI DATASETS
+    data_2014 = pd.read_csv('veronacard_2014_opendata.csv')
+    data_2015 = pd.read_csv('veronacard_2015_opendata.csv')
+    data_2016 = pd.read_csv('veronacard_2016_opendata.csv')
+    data_2017 = pd.read_csv('veronacard_2017_opendata.csv')
+    data_2018 = pd.read_csv('veronacard_2018_opendata.csv')
+    data_2019 = pd.read_csv('veronacard_2019_opendata.csv')
 
-  st.header('Datasets')
-  st.write('''
-          In order to analyze the usage of the VeronaCards through the years
-          the datasets from 2014 to 2020 has been downloaded from the link: 
-          https://dati.veneto.it/catalogo-opendata/comune_di_verona_311.
-          ''')  
-  st.write('''
-          This is how they looks:
-          ''')
+    weekdays = {
+      'Not Specified':-1,
+      'Monday':0,
+      'Tuesday':1,
+      'Wednesday':2,
+      'Thursday':3,
+      'Friday':4,
+      'Saturday':5,
+      'Sunday':6
+    }
 
-  ## CARICAMENTO DEI DATASETS
-  data_2014 = pd.read_csv('veronacard_2014_opendata.csv')
-  data_2015 = pd.read_csv('veronacard_2015_opendata.csv')
-  data_2016 = pd.read_csv('veronacard_2016_opendata.csv')
-  data_2017 = pd.read_csv('veronacard_2017_opendata.csv')
-  data_2018 = pd.read_csv('veronacard_2018_opendata.csv')
-  data_2019 = pd.read_csv('veronacard_2019_opendata.csv')
+    week=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
-  weekdays = {
-    'Not Specified':-1,
-    'Monday':0,
-    'Tuesday':1,
-    'Wednesday':2,
-    'Thursday':3,
-    'Friday':4,
-    'Saturday':5,
-    'Sunday':6
-  }
-
-  week=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-
-  dataframes = {
-    #'Not Specified': data_2014_2019,
-    2014: data_2014,
-    2015: data_2015,
-    2016: data_2016,
-    2017: data_2017,
-    2018: data_2018,
-    2019: data_2019
-  }
-  year = st.selectbox('Year',list(dataframes.keys()))
-  df = dataframes[year]
-  st.write('Dataframe dimensions:',str(df.shape[0]),'rows,',str(df.shape[1]),'columns')
-  st.dataframe(df)
-  st.download_button('Download '+str(year)+' CSV',data = open('veronacard_'+str(year)+'_opendata.csv'),file_name='veronacard_'+str(year)+'_opendata.csv')
+    dataframes = {
+      #'Not Specified': data_2014_2019,
+      2014: data_2014,
+      2015: data_2015,
+      2016: data_2016,
+      2017: data_2017,
+      2018: data_2018,
+      2019: data_2019
+    }
+    year = st.selectbox('Year',list(dataframes.keys()))
+    df = dataframes[year]
+    st.write('Dataframe dimensions:',str(df.shape[0]),'rows,',str(df.shape[1]),'columns')
+    st.dataframe(df)
+    st.download_button('Download '+str(year)+' CSV',data = open('veronacard_'+str(year)+'_opendata.csv'),file_name='veronacard_'+str(year)+'_opendata.csv')
 
 #--------------------------------------------------------------------------------------------------------
 ## SECONDA PAGINA
@@ -218,47 +221,52 @@ if selected == 'Data Cleaning':
           sense to be part of the study. Below, it is observable how the datasets have been cleaned step-by-step, 
           in particular the 2014 VeronaCard Dataset.
           ''')
+
   # DATASET ORIGINALI
-  st.subheader('Original Dataset')
-  st.write('''
-          This is how the original dataset is constructed. A notable fact is that some columns are
-          useless for the project: ***id_veronacard***, ***profilo***, ***data_attivazione***, ***sito_latitudine***,
-          ***sito_longitudine*** has to be dropped.
-          ''')
-  data_2014 = pd.read_csv('veronacard_2014_opendata.csv')
-  st.dataframe(data_2014)
+  with st.container():
+    st.subheader('Original Dataset')
+    st.write('''
+            This is how the original dataset is constructed. A notable fact is that some columns are
+            useless for the project: ***id_veronacard***, ***profilo***, ***data_attivazione***, ***sito_latitudine***,
+            ***sito_longitudine*** has to be dropped.
+            ''')
+    data_2014 = pd.read_csv('veronacard_2014_opendata.csv')
+    st.dataframe(data_2014)
   
   # RIMOSSIONE COLONNE INUTILI
-  st.subheader('Useless columns drop ')
-  st.write('''
-          Some columns are
-          useless for the project: ***id_veronacard***, ***profilo***, ***data_attivazione***, ***sito_latitudine***,
-          ***sito_longitudine*** are dropped.
-          ''')
-  data_2014 = data_2014.drop(columns=['data_attivazione','profilo','id_veronacard','sito_latitudine','sito_longitudine'])
-  st.dataframe(data_2014)
+  with st.container():
+    st.subheader('Useless columns drop ')
+    st.write('''
+            Some columns are
+            useless for the project: ***id_veronacard***, ***profilo***, ***data_attivazione***, ***sito_latitudine***,
+            ***sito_longitudine*** are dropped.
+            ''')
+    data_2014 = data_2014.drop(columns=['data_attivazione','profilo','id_veronacard','sito_latitudine','sito_longitudine'])
+    st.dataframe(data_2014)
 
   # RENDO LE DATE IN FORMATO DATETIME e AGGIUNGO LA COLONNA WEEKDAY
-  st.subheader('Format column conversion and column addition')
-  st.write('''
-          In the previous steps the column data_visita has string-format, which is not the best format in order to be ready 
-          to select just one between the day, the month and the year. So, it is advisable to convert that column to a datetime-format. 
-          Moreover, because of the project purpose, it is useful to add the weekday column: it represents the day of the week 
-          corresponding to the date. 
-          ''')
-  data_2014['data_visita'] = pd.to_datetime(data_2014['data_visita'])
-  data_2014['weekday'] = data_2014['data_visita'].dt.weekday
-  st.dataframe(data_2014)
+  with st.container():
+    st.subheader('Format column conversion and column addition')
+    st.write('''
+            In the previous steps the column data_visita has string-format, which is not the best format in order to be ready 
+            to select just one between the day, the month and the year. So, it is advisable to convert that column to a datetime-format. 
+            Moreover, because of the project purpose, it is useful to add the weekday column: it represents the day of the week 
+            corresponding to the date. 
+            ''')
+    data_2014['data_visita'] = pd.to_datetime(data_2014['data_visita'])
+    data_2014['weekday'] = data_2014['data_visita'].dt.weekday
+    st.dataframe(data_2014)
 
   # ORDINO I DATAFRAME PER DATA E ORA e CAMBIO NOME DELLE COLONNE
-  st.subheader('Dataset sort and change of columns name')
-  st.write('''
-          Last but not least, the dataset is sorted by ***visit_date*** and ***visit_time***, after the renomination
-          of the columns to the english corresponding names.
-          ''')
-  data_2014 = data_2014.sort_values(by=['data_visita','ora_visita']).reset_index().drop(columns='index')
-  data_2014.rename(columns={'data_visita': 'visit_date', 'ora_visita': 'visit_time', 'sito_nome': 'site'}, inplace=True)
-  st.dataframe(data_2014)
+  with st.container():
+    st.subheader('Dataset sort and change of columns name')
+    st.write('''
+            Last but not least, the dataset is sorted by ***visit_date*** and ***visit_time***, after the renomination
+            of the columns to the english corresponding names.
+            ''')
+    data_2014 = data_2014.sort_values(by=['data_visita','ora_visita']).reset_index().drop(columns='index')
+    data_2014.rename(columns={'data_visita': 'visit_date', 'ora_visita': 'visit_time', 'sito_nome': 'site'}, inplace=True)
+    st.dataframe(data_2014)
 
 
 #----------------------------------------------------------------------------------------------------
@@ -317,22 +325,43 @@ if selected == 'Analysis':
       2019: data_2019
     }
 
-  st.header('Years Analysis')
-  site = st.selectbox('Site input',['Not Specified']+sites)
-  df = df_by_day_month_year_site_weekday('Not Specified','Not Specified','Not Specified',-1,site)
-  a = np.zeros((len(sites),len(years)))
-  for i in range(len(sites)):
-    for j in range(len(years)):
-      a[i][j] = len(dataframes[years[j]][dataframes[years[j]]['site']==sites[i]])
-  d = pd.DataFrame(a, columns = years, index = sites).T
-  st.bar_chart(d[site])
-  st.line_chart(d)
+  with st.container():
+    st.header('Analysis by year')
 
-  st.header('Months Analysis')
+    st.subheader('Stats')
+    a = np.zeros((len(sites),len(years)))
+    for i in range(len(sites)):
+      for j in range(len(years)):
+        a[i][j] = len(dataframes[years[j]][dataframes[years[j]]['site']==sites[i]])
+    df = pd.DataFrame(a, columns = years, index = sites).T
+    df['Not Specified'] = [sum(df.T[year]) for year in years]
 
-  st.header('Days of the week Analysis')
+    site = st.selectbox('Site input',['Not Specified']+sites)
 
-  st.header('Hours Analysis')
+    st.write('**Total number of visits**:', str(int(sum(df[site]))))
+    st.write('**Average number of visits per year**:', str(round(np.mean(df[site]),2)))
+    st.write('**Year with the highest number of visits**:', str(2014+np.argmax(df[site])))
+    st.write('**Highest number of visits**:', str(int(max(df[site]))))
+
+    st.bar_chart(df[site])
+
+    st.subheader('Comparison')
+    if site != 'Not Specified':
+      options = st.multiselect('Choose the sites to make the comparison',sites,site)
+    else:
+      options = st.multiselect('Choose the sites to make the comparison',sites,sites[0])
+    button_sent = st.button("SUBMIT")
+    if button_sent:
+      st.line_chart(df[options])
+
+  with st.container():
+    st.header('Months Analysis')
+
+  with st.container():
+    st.header('Days of the week Analysis')
+
+  with st.container():
+    st.header('Hours Analysis')
 
   #a=st.date_input('Date input',value=min(data_2014['visit_date']),min_value=min(data_2014['visit_date']),max_value=max(data_2020['visit_date']))
   #site=st.selectbox('Site input',sorted(list(data_2014_2020['site'].unique())))
