@@ -313,7 +313,7 @@ if selected == 'Analysis':
 
   sites = sorted(list(data_2014_2019['site'].unique()))
 
-  years = np.arange(2014,2020)
+  years = range(2014,2020)
 
   dataframes = {
       'Not Specified': data_2014_2019,
@@ -328,12 +328,11 @@ if selected == 'Analysis':
   with st.container():
     st.header('Analysis by year')
 
-    st.subheader('Stats')
-    a = np.zeros((len(sites),len(years)))
+    matrix = np.zeros((len(sites),len(years)))
     for i in range(len(sites)):
       for j in range(len(years)):
-        a[i][j] = len(dataframes[years[j]][dataframes[years[j]]['site']==sites[i]])
-    df = pd.DataFrame(a, columns = years, index = sites).T
+        matrix[i][j] = len(dataframes[years[j]][dataframes[years[j]]['site']==sites[i]])
+    df = pd.DataFrame(matrix, columns = years, index = sites).T
     df['Not Specified'] = [sum(df.T[year]) for year in years]
 
     site = st.selectbox('Site input',['Not Specified']+sites)
@@ -345,7 +344,39 @@ if selected == 'Analysis':
 
     st.bar_chart(df[site])
 
-    st.subheader('Comparison')
+  with st.container():
+    st.header('Months Analysis')
+    year = st.selectbox('Year input',['Not Specified']+list(years))
+
+    if year != 'Not Specified':
+      matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,-1,site)) for month in range(1,13)]
+      df = pd.DataFrame(matrix, index = range(1,13), columns = [site])
+      st.write('**Total number of visits**:', str(int(sum(df[site]))))
+      st.write('**Average number of visits per month**:', str(round(df[site].mean(),2)))
+      st.write('**Month with the highest absolute number of visits**:', str(1+np.argmax(df[site])))
+      st.write('**Highest number of visits**:', str(max(df[site])))
+      st.bar_chart(df)
+    else:
+      matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,-1,site)) for month in range(1,13)] for year in years]
+      df = pd.DataFrame(matrix, index = years, columns = range(1,13))
+      st.write('**Average number of visits per month**:', str(round(df.mean().mean(),2)))
+      st.write('**Month with the highest average number of visits**:', str(1+np.argmax(df.mean())) )
+      st.write('**Highest average number of visits**:', str(round(df.mean().max(),2)))
+
+      options = st.radio('Select:',['Avg visits per month', 'Absolute visits per month'])
+      if options == 'Avg visits per month':
+        st.bar_chart(pd.DataFrame(df.mean(),columns=[site]))
+      else: 
+        st.bar_chart(pd.DataFrame(df.sum(),columns=[site]))
+
+  with st.container():
+    st.header('Days of the week Analysis')
+
+  with st.container():
+    st.header('Hours Analysis')
+
+  with st.container():
+    st.header('Comparison')
     if site != 'Not Specified':
       options = st.multiselect('Choose the sites to make the comparison',sites,site)
     else:
@@ -353,15 +384,6 @@ if selected == 'Analysis':
     button_sent = st.button("SUBMIT")
     if button_sent:
       st.line_chart(df[options])
-
-  with st.container():
-    st.header('Months Analysis')
-
-  with st.container():
-    st.header('Days of the week Analysis')
-
-  with st.container():
-    st.header('Hours Analysis')
 
   #a=st.date_input('Date input',value=min(data_2014['visit_date']),min_value=min(data_2014['visit_date']),max_value=max(data_2020['visit_date']))
   #site=st.selectbox('Site input',sorted(list(data_2014_2020['site'].unique())))
