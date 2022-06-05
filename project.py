@@ -299,7 +299,7 @@ if selected == 'Analysis':
   data_2014_2019 = pd.concat([data_2014,data_2015,data_2016,data_2017,data_2018,data_2019], ignore_index=True)
 
   weekdays = {
-      #'Not Specified':-1,
+      'Not Specified':-1,
       'Monday':0,
       'Tuesday':1,
       'Wednesday':2,
@@ -309,17 +309,7 @@ if selected == 'Analysis':
       'Sunday':6
     }
 
-  weekdays_2 = {
-    0: 'Monday',
-    1: 'Tuesday',
-    2: 'Wednesday',
-    3: 'Thursday',
-    4: 'Friday',
-    5: 'Saturday',
-    6: 'Sunday'
-  }
-
-  week=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+  week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
   sites = sorted(list(data_2014_2019['site'].unique()))
 
@@ -355,7 +345,7 @@ if selected == 'Analysis':
     st.bar_chart(df[site])
 
   with st.container():
-    st.header('Months Analysis')
+    st.header('Analysis by month')
     year = st.selectbox('Year input',['Not Specified']+list(years))
 
     if year != 'Not Specified':
@@ -380,7 +370,7 @@ if selected == 'Analysis':
         st.bar_chart(pd.DataFrame(df.sum(),columns=[site]))
 
   with st.container():
-    st.header('Days of the week Analysis')
+    st.header('Analysis by day of the week')
     c1, c2 = st.columns([1,1])
     month = c1.selectbox('Month Input',['Not Specified']+list(range(1, 13)), key = 1)
     year = c2.selectbox('Year Input',list(dataframes.keys()), key = 2)
@@ -394,13 +384,34 @@ if selected == 'Analysis':
     options = st.radio('Select:',['Avg visits per day of the week', 'Absolute visits per day of the week'])
     if options == 'Absolute visits per day of the week':
       matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site)) for weekday in range(0,7)]
-    df = pd.DataFrame(matrix, columns = [str(month)+'/'+str(year)])#, index = week)
     
+    df = pd.DataFrame(matrix, columns = [str(month)+'/'+str(year)])#, index = week)
     st.bar_chart(df)
 
 
   with st.container():
-    st.header('Hours Analysis')
+    st.header('Analysis by hour')
+
+    options = st.radio('Select:',['By date', 'By period'])
+    if options == 'By date':
+      date_selection = st.date_input('Date', value=min(data_2014_2019['visit_date']), min_value=min(data_2014_2019['visit_date']), max_value=max(data_2014_2019['visit_date']))
+      day = date_selection.day
+      month = date_selection.month
+      year = date_selection.year
+      weekday = -1
+    else:
+      c1, c2, c3 = st.columns([1,1,1])
+      day = 'Not Specified'
+      month = c1.selectbox('Month',['Not Specified']+list(range(1, 13)),key = 1)
+      year = c2.selectbox('Year',list(dataframes.keys()),key = 2)
+      weekday = weekdays[c3.selectbox('Day of the week',['Not Specified']+week)]
+      
+    df = df_by_day_month_year_site_weekday(day,month,year,weekday,site)
+    dectime = str_to_dectime(day,month,year,weekday,site)
+    rounded_dectime = [round(number+0.000000001) for number in dectime]
+    df['visit_time'] = rounded_dectime
+
+    st.bar_chart(df.groupby('visit_time').count()['site'])
 
   with st.container():
     st.header('Comparison')
