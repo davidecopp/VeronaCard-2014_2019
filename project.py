@@ -299,7 +299,7 @@ if selected == 'Analysis':
   data_2014_2019 = pd.concat([data_2014,data_2015,data_2016,data_2017,data_2018,data_2019], ignore_index=True)
 
   weekdays = {
-      'Not Specified':-1,
+      #'Not Specified':-1,
       'Monday':0,
       'Tuesday':1,
       'Wednesday':2,
@@ -308,6 +308,16 @@ if selected == 'Analysis':
       'Saturday':5,
       'Sunday':6
     }
+
+  weekdays_2 = {
+    0: 'Monday',
+    1: 'Tuesday',
+    2: 'Wednesday',
+    3: 'Thursday',
+    4: 'Friday',
+    5: 'Saturday',
+    6: 'Sunday'
+  }
 
   week=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 
@@ -371,6 +381,23 @@ if selected == 'Analysis':
 
   with st.container():
     st.header('Days of the week Analysis')
+    c1, c2 = st.columns([1,1])
+    month = c1.selectbox('Month Input',['Not Specified']+list(range(1, 13)), key = 1)
+    year = c2.selectbox('Year Input',list(dataframes.keys()), key = 2)
+
+    matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,6,site).groupby('visit_date')) for weekday in range(0,7)]
+    
+    st.write('**Average number of visits per day of the week**:', str(round(np.mean(matrix),2)))
+    st.write('**Day of the week with the highest average number of visits**:', week[np.argmax(matrix)] )
+    st.write('**Highest average number of visits**:', str(round(np.max(matrix),2)))
+
+    options = st.radio('Select:',['Avg visits per day of the week', 'Absolute visits per day of the week'])
+    if options == 'Absolute visits per day of the week':
+      matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site)) for weekday in range(0,7)]
+    df = pd.DataFrame(matrix, columns = [str(month)+'/'+str(year)])#, index = week)
+    
+    st.bar_chart(df)
+
 
   with st.container():
     st.header('Hours Analysis')
@@ -385,12 +412,7 @@ if selected == 'Analysis':
     if button_sent:
       st.line_chart(df[options])
 
-  #a=st.date_input('Date input',value=min(data_2014['visit_date']),min_value=min(data_2014['visit_date']),max_value=max(data_2020['visit_date']))
-  #site=st.selectbox('Site input',sorted(list(data_2014_2020['site'].unique())))
-  #day=a.day
-  #month=a.month
-  #year=a.year
-  #st.dataframe(df_by_day_month_year_site_weekday(day,month,year,weekday,site))
+  
 
 
 #-------------------------------------------------------------------------------------------------------
