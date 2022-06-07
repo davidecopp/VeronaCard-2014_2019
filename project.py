@@ -1,3 +1,4 @@
+from re import S
 import pandas as pd
 import numpy as np
 import seaborn as sb
@@ -100,7 +101,7 @@ def plot_avg_affluence_on_week(month,year,site):
 ## SIDEBAR
 
 with st.sidebar:
-    selected = stm.option_menu("Main Menu", ['Homepage','Data Cleaning','Analysis','Comparison','Regression'], default_index=0)
+    selected = stm.option_menu("Main Menu", ['Homepage','Data Cleaning','Analysis','Regression'], default_index=0)
 
 #---------------------------------------------------------------------------------------------
 ## PRIMA PAGINA
@@ -267,12 +268,9 @@ if selected == 'Data Cleaning':
     data_2014.rename(columns={'data_visita': 'visit_date', 'ora_visita': 'visit_time', 'sito_nome': 'site'}, inplace=True)
     st.dataframe(data_2014)
 
-
 #----------------------------------------------------------------------------------------------------
 ## TERZA PAGINA
-
 if selected == 'Analysis':
-  st.title('Verona Card Utilizzo - Analysis')
 
   data_2014 = pd.read_csv('data_2014.csv')
   data_2015 = pd.read_csv('data_2015.csv')
@@ -309,168 +307,9 @@ if selected == 'Analysis':
     }
 
   week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+
   week_2 = ['0_Monday','1_Tuesday','2_Wednesday','3_Thursday','4_Friday','5_Saturday','6_Sunday']
 
-  sites = sorted(list(data_2014_2019['site'].unique()))
-
-  years = range(2014,2020)
-
-  dataframes = {
-      'Not Specified': data_2014_2019,
-      2014: data_2014,
-      2015: data_2015,
-      2016: data_2016,
-      2017: data_2017,
-      2018: data_2018,
-      2019: data_2019
-    }
-
-  with st.container():
-    st.header('Analysis by year')
-
-    matrix = np.zeros((len(sites),len(years)))
-    for i in range(len(sites)):
-      for j in range(len(years)):
-        matrix[i][j] = len(dataframes[years[j]][dataframes[years[j]]['site']==sites[i]])
-    df_year = pd.DataFrame(matrix, columns = years, index = sites).T
-    df_year['Not Specified'] = [sum(df_year.T[year]) for year in years]
-
-    site = st.selectbox('Site input',['Not Specified']+sites)
-
-    st.write('**Total number of visits**:', str(int(sum(df_year[site]))))
-    st.write('**Average number of visits per year**:', str(round(np.mean(df_year[site]),2)))
-    st.write('**Year with the highest number of visits**:', str(2014+np.argmax(df_year[site])))
-    st.write('**Highest number of visits**:', str(int(max(df_year[site]))))
-
-    st.bar_chart(df_year[site])
-
-  with st.container():
-    st.header('Analysis by month')
-    year = st.selectbox('Year input',['Not Specified']+list(years))
-
-    if year != 'Not Specified':
-      matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,-1,site)) for month in range(1,13)]
-      df_month = pd.DataFrame(matrix, index = range(1,13), columns = [site])
-      st.write('**Total number of visits**:', str(int(sum(df_month[site]))))
-      st.write('**Average number of visits per month**:', str(round(df_month[site].mean(),2)))
-      st.write('**Month with the highest absolute number of visits**:', str(1+np.argmax(df_month[site])))
-      st.write('**Highest number of visits**:', str(max(df_month[site])))
-      st.bar_chart(df_month)
-    else:
-      matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,-1,site)) for month in range(1,13)] for year in years]
-      df_month = pd.DataFrame(matrix, index = years, columns = range(1,13))
-      st.write('**Average number of visits per month**:', str(round(df_month.mean().mean(),2)))
-      st.write('**Month with the highest average number of visits**:', str(1+np.argmax(df_month.mean())) )
-      st.write('**Highest average number of visits**:', str(round(df_month.mean().max(),2)))
-
-      options = st.radio('Select:',['Avg visits per month', 'Absolute visits per month'])
-      if options == 'Avg visits per month':
-        st.bar_chart(pd.DataFrame(df_month.mean(),columns=[site]))
-      else: 
-        st.bar_chart(pd.DataFrame(df_month.sum(),columns=[site]))
-
-  with st.container():
-    st.header('Analysis by day of the week')
-    c1, c2 = st.columns([1,1])
-    month = c1.selectbox('Month Input',['Not Specified']+list(range(1, 13)), key = 1)
-    year = c2.selectbox('Year Input',list(dataframes.keys()), key = 2)
-
-    matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site).groupby('visit_date')) for weekday in range(0,7)]
-    
-    st.write('**Average number of visits per day of the week**:', str(round(np.mean(matrix),2)))
-    st.write('**Day of the week with the highest average number of visits**:', week[np.argmax(matrix)])
-    st.write('**Highest average number of visits**:', str(round(np.max(matrix),2)))
-
-    options = st.radio('Select:',['Avg visits per day of the week', 'Absolute visits per day of the week'])
-    if options == 'Absolute visits per day of the week':
-      matrix = [len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site)) for weekday in range(0,7)]
-    
-    df_week = pd.DataFrame(matrix, columns = [str(month)+'/'+str(year)])#, index = week)
-    st.bar_chart(df_week)
-
-
-  with st.container():
-    st.header('Analysis by hour')
-
-    options = st.radio('Select:',['By date', 'By period'])
-    if options == 'By date':
-      date_selection = st.date_input('Date', value=min(data_2014_2019['visit_date']), min_value=min(data_2014_2019['visit_date']), max_value=max(data_2014_2019['visit_date']))
-      day = date_selection.day
-      month = date_selection.month
-      year = date_selection.year
-      weekday = -1
-    else:
-      c1, c2, c3 = st.columns([1,1,1])
-      day = 'Not Specified'
-      month = c1.selectbox('Month',['Not Specified']+list(range(1, 13)),key = 1)
-      year = c2.selectbox('Year',list(dataframes.keys()),key = 2)
-      weekday = weekdays[c3.selectbox('Day of the week',['Not Specified']+week)]
-  
-    df = df_by_day_month_year_site_weekday(day,month,year,weekday,site)
-    avg_affluence = plt.hist(str_to_dectime(day,month,year,weekday,site),bins=np.arange(7.5,20.5))[0]/len(df.groupby('visit_date'))
-    plt.close()
-    df_hour = pd.DataFrame(index = range(8,20))
-    df_hour[site] = avg_affluence
-
-    st.write('**Average number of visits per hour**:', str(round(df_hour[site].mean(),2)))
-    st.write('**Hour with the highest average number of visits**:', str(8+np.argmax(df_hour[site])))
-    st.write('**Highest average number of visits**:', str(round(df_hour[site].max(),2)))
-
-    st.bar_chart(df_hour)
-
-  with st.container():
-    st.header('Comparison')
-    if site != 'Not Specified':
-      options = st.multiselect('Choose the sites to make the comparison',sites,site)
-    else:
-      options = st.multiselect('Choose the sites to make the comparison',sites,sites[0])
-    button_sent = st.button("SUBMIT")
-
-    if button_sent:
-      st.line_chart(df_year[options])
-  
-
-
-#-------------------------------------------------------------------------------------------------------
-## QUARTA PAGINA
-if selected == 'Comparison':
-
-  data_2014 = pd.read_csv('data_2014.csv')
-  data_2015 = pd.read_csv('data_2015.csv')
-  data_2016 = pd.read_csv('data_2016.csv')
-  data_2017 = pd.read_csv('data_2017.csv')
-  data_2018 = pd.read_csv('data_2018.csv')
-  data_2019 = pd.read_csv('data_2019.csv')
-
-  data_2014.drop(columns='Unnamed: 0',inplace=True)
-  data_2015.drop(columns='Unnamed: 0',inplace=True)
-  data_2016.drop(columns='Unnamed: 0',inplace=True)
-  data_2017.drop(columns='Unnamed: 0',inplace=True)
-  data_2018.drop(columns='Unnamed: 0',inplace=True)
-  data_2019.drop(columns='Unnamed: 0',inplace=True)
-
-  data_2014['visit_date'] = pd.to_datetime(data_2014['visit_date'])
-  data_2015['visit_date'] = pd.to_datetime(data_2015['visit_date'])
-  data_2016['visit_date'] = pd.to_datetime(data_2016['visit_date'])
-  data_2017['visit_date'] = pd.to_datetime(data_2017['visit_date'])
-  data_2018['visit_date'] = pd.to_datetime(data_2018['visit_date'])
-  data_2019['visit_date'] = pd.to_datetime(data_2019['visit_date'])
-
-  data_2014_2019 = pd.concat([data_2014,data_2015,data_2016,data_2017,data_2018,data_2019], ignore_index=True)
-
-  weekdays = {
-      'Not Specified':-1,
-      'Monday':0,
-      'Tuesday':1,
-      'Wednesday':2,
-      'Thursday':3,
-      'Friday':4,
-      'Saturday':5,
-      'Sunday':6
-    }
-
-  week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-  week_2 = ['0_Monday','1_Tuesday','2_Wednesday','3_Thursday','4_Friday','5_Saturday','6_Sunday']
   sites = sorted(list(data_2014_2019['site'].unique()))
 
   years = range(2014,2020)
@@ -487,28 +326,54 @@ if selected == 'Comparison':
       2019: data_2019
     }
 
-  st.title('Verona Card Utilizzo - Comparison')
-  options = st.multiselect('Choose the sites to make the comparison',sites,sites[0])
+  st.title('Verona Card Utilizzo - Analysis')
+  options = st.multiselect('Choose the site to analyze or the sites to compare:',sites,sites[0])
 
   matrix = [[len(df_by_day_month_year_site_weekday('Not Specified','Not Specified',year,-1,site)) for year in years] for site in options]
-  df = pd.DataFrame(matrix, index = options, columns = years).T
-  st.line_chart(df)
+  df_year = pd.DataFrame(matrix, index = options, columns = years).T
 
-  year = st.selectbox('Year',['Not Specified']+list(years))
+  st.header('By year')
+  if len(options) == 1:
+    st.write('**Total number of visits**:', str(int(sum(df_year[options[0]]))))
+    st.write('**Average number of visits per year**:', str(round(np.mean(df_year[options[0]]),2)))
+    st.write('**Year with the highest number of visits**:', str(2014+np.argmax(df_year[options[0]])))
+    st.write('**Highest number of visits**:', str(int(max(df_year[options[0]]))))
+    st.bar_chart(df_year)
+  else: 
+    st.line_chart(df_year)
+
+  st.header('By month')
+  year = st.selectbox('Year:',['Not Specified']+list(years))
   matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,-1,site))/len(years) for month in months] for site in options]
-  df = pd.DataFrame(matrix, index = options, columns = months).T
-  st.line_chart(df)
+  df_month = pd.DataFrame(matrix, index = options, columns = months).T
 
+  if len(options) == 1:
+    st.write('**Average number of visits per month**:', str(round(df_month[options[0]].mean(),2)))
+    st.write('**Month with the highest average number of visits**:', str(1+np.argmax(df_month[options[0]])) )
+    st.write('**Highest average number of visits**:', str(round(df_month[options[0]].max(),2)))
+    st.bar_chart(df_month)
+  else: 
+    st.line_chart(df_month)
+  
+  st.header('By day of the week')
   c1, c2 = st.columns([1,1])
-  month = c1.selectbox('Month Input',['Not Specified']+list(months), key = 1)
-  year = c2.selectbox('Year',['Not Specified']+list(years), key = 2)
+  month = c1.selectbox('Month:',['Not Specified']+list(months), key = 1)
+  year = c2.selectbox('Year:',['Not Specified']+list(years), key = 2)
   matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site).groupby('visit_date')) for weekday in range(0,7)] for site in options]
-  df = pd.DataFrame(matrix, index = options, columns = week_2).T
-  st.line_chart(df)
+  df_weekday = pd.DataFrame(matrix, index = options, columns = week_2).T
 
-  options_2 = st.radio('Select:',['By date', 'By period'])
-  if options_2 == 'By date':
-    date_selection = st.date_input('Date', value=min(data_2014_2019['visit_date']), min_value=min(data_2014_2019['visit_date']), max_value=max(data_2014_2019['visit_date']))
+  if len(options) == 1:
+    st.write('**Average number of visits per day of the week**:', str(round(df_weekday[options[0]].mean(),2)))
+    st.write('**Day of the week with the highest average number of visits**:', week[np.argmax(df_weekday[options[0]])])
+    st.write('**Highest average number of visits**:', str(round(df_weekday[options[0]].max(),2)))
+    st.bar_chart(df_weekday)
+  else: 
+    st.line_chart(df_weekday)
+  
+  st.header('By hour')
+  options_2 = st.radio('Select:',['Date', 'Period'])
+  if options_2 == 'Date':
+    date_selection = st.date_input('Date:', value=min(data_2014_2019['visit_date']), min_value=min(data_2014_2019['visit_date']), max_value=max(data_2014_2019['visit_date']))
     day = date_selection.day
     month = date_selection.month
     year = date_selection.year
@@ -516,17 +381,24 @@ if selected == 'Comparison':
   else:
     c1, c2, c3 = st.columns([1,1,1])
     day = 'Not Specified'
-    month = c1.selectbox('Month',['Not Specified']+list(months), key = 1)
-    year = c2.selectbox('Year',['Not Specified']+list(years), key = 2)
-    weekday = weekdays[c3.selectbox('Day of the week',['Not Specified']+week)]
+    month = c1.selectbox('Month:',['Not Specified']+list(months), key = 3)
+    year = c2.selectbox('Year:',['Not Specified']+list(years), key = 4)
+    weekday = weekdays[c3.selectbox('Day of the week:',['Not Specified']+week)]
 
   avg_affluence = [plt.hist(str_to_dectime(day,month,year,weekday,site),bins=np.arange(7.5,20.5))[0]/len(df_by_day_month_year_site_weekday(day,month,year,weekday,site).groupby('visit_date')) for site in options]
   plt.close()
   df_hour = pd.DataFrame(avg_affluence, index = options,columns = range(8,20)).T
-  st.line_chart(df)
+
+  if len(options) == 1:
+    st.write('**Average number of visits per hour**:', str(round(df_hour[options[0]].mean(),2)))
+    st.write('**Hour with the highest average number of visits**:', str(8+np.argmax(df_hour[options[0]])))
+    st.write('**Highest average number of visits**:', str(round(df_hour[options[0]].max(),2)))
+    st.bar_chart(df_hour)
+  else: 
+    st.line_chart(df_hour)
 
 #-------------------------------------------------------------------------------------------------------
-## QUINTA PAGINA
+## QUARTA PAGINA
 if selected == 'Regression':
   st.title('Verona Card Utilizzo - Regression')
 
