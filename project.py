@@ -327,7 +327,7 @@ if selected == 'Analysis':
     }
 
   st.title('Verona Card Utilizzo - Analysis')
-  options = st.multiselect('Choose the site to analyze or the sites to compare:',sites,sites[0])
+  options = st.multiselect('Choose the site to analyze or the sites to compare:',sites,'Arena')
 
   matrix = [[len(df_by_day_month_year_site_weekday('Not Specified','Not Specified',year,-1,site)) for year in years] for site in options]
   df_year = pd.DataFrame(matrix, index = options, columns = years).T
@@ -356,9 +356,10 @@ if selected == 'Analysis':
     st.line_chart(df_month)
   
   st.header('By day of the week')
-  c1, c2 = st.columns([1,1])
-  month = c1.selectbox('Month:',['Not Specified']+list(months), key = 1)
-  year = c2.selectbox('Year:',['Not Specified']+list(years), key = 2)
+  #c1, c2 = st.columns([1,1])
+  #month = c1.selectbox('Month:',['Not Specified']+list(months), key = 1)
+  #year = c2.selectbox('Year:',['Not Specified']+list(years), key = 2)
+  month = st.selectbox('Month:',['Not Specified']+list(months))
   matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site).groupby('visit_date')) for weekday in range(0,7)] for site in options]
   df_weekday = pd.DataFrame(matrix, index = options, columns = week_2).T
 
@@ -371,7 +372,7 @@ if selected == 'Analysis':
     st.line_chart(df_weekday)
   
   st.header('By hour')
-  options_2 = st.radio('Select:',['Date', 'Period'])
+  options_2 = st.radio('Select:',['Date', 'Period'], index=1)
   if options_2 == 'Date':
     date_selection = st.date_input('Date:', value=min(data_2014_2019['visit_date']), min_value=min(data_2014_2019['visit_date']), max_value=max(data_2014_2019['visit_date']))
     day = date_selection.day
@@ -381,8 +382,8 @@ if selected == 'Analysis':
   else:
     c1, c2, c3 = st.columns([1,1,1])
     day = 'Not Specified'
-    month = c1.selectbox('Month:',['Not Specified']+list(months), key = 3)
-    year = c2.selectbox('Year:',['Not Specified']+list(years), key = 4)
+    month = c1.selectbox('Month:',['Not Specified']+list(months), key = 3, index = (['Not Specified']+list(months)).index(month))
+    year = c2.selectbox('Year:',['Not Specified']+list(years), key = 4, index = (['Not Specified']+list(years)).index(year))
     weekday = weekdays[c3.selectbox('Day of the week:',['Not Specified']+week)]
 
   avg_affluence = [plt.hist(str_to_dectime(day,month,year,weekday,site),bins=np.arange(7.5,20.5))[0]/len(df_by_day_month_year_site_weekday(day,month,year,weekday,site).groupby('visit_date')) for site in options]
@@ -402,10 +403,78 @@ if selected == 'Analysis':
 if selected == 'Regression':
   st.title('Verona Card Utilizzo - Regression')
 
+  data_2014 = pd.read_csv('data_2014.csv')
+  data_2015 = pd.read_csv('data_2015.csv')
+  data_2016 = pd.read_csv('data_2016.csv')
+  data_2017 = pd.read_csv('data_2017.csv')
+  data_2018 = pd.read_csv('data_2018.csv')
+  data_2019 = pd.read_csv('data_2019.csv')
+
+  data_2014.drop(columns='Unnamed: 0',inplace=True)
+  data_2015.drop(columns='Unnamed: 0',inplace=True)
+  data_2016.drop(columns='Unnamed: 0',inplace=True)
+  data_2017.drop(columns='Unnamed: 0',inplace=True)
+  data_2018.drop(columns='Unnamed: 0',inplace=True)
+  data_2019.drop(columns='Unnamed: 0',inplace=True)
+
+  data_2014['visit_date'] = pd.to_datetime(data_2014['visit_date'])
+  data_2015['visit_date'] = pd.to_datetime(data_2015['visit_date'])
+  data_2016['visit_date'] = pd.to_datetime(data_2016['visit_date'])
+  data_2017['visit_date'] = pd.to_datetime(data_2017['visit_date'])
+  data_2018['visit_date'] = pd.to_datetime(data_2018['visit_date'])
+  data_2019['visit_date'] = pd.to_datetime(data_2019['visit_date'])
+
+  data_2014_2019 = pd.concat([data_2014,data_2015,data_2016,data_2017,data_2018,data_2019], ignore_index=True)
+
+  weekdays = {
+      'Not Specified':-1,
+      'Monday':0,
+      'Tuesday':1,
+      'Wednesday':2,
+      'Thursday':3,
+      'Friday':4,
+      'Saturday':5,
+      'Sunday':6
+    }
+
+  week = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+
+  week_2 = ['0_Monday','1_Tuesday','2_Wednesday','3_Thursday','4_Friday','5_Saturday','6_Sunday']
+
+  sites = sorted(list(data_2014_2019['site'].unique()))
+
+  years = range(2014,2020)
+
+  months = range(1,13)
+
+  dataframes = {
+      'Not Specified': data_2014_2019,
+      2014: data_2014,
+      2015: data_2015,
+      2016: data_2016,
+      2017: data_2017,
+      2018: data_2018,
+      2019: data_2019
+    }
+
+  top_sites = ['Arena','Casa Giulietta','Castelvecchio','Duomo','Palazzo della Ragione','Santa Anastasia','Teatro Romano','Tomba Giulietta','Torre Lamberti']
+  data_14_19_filtered = data_2014_2019[data_2014_2019.site.isin(top_sites)].reset_index().drop(columns='index')
+  data = data_14_19_filtered.groupby(['visit_date','site']).count().reset_index()
+  data['weekday']=data['visit_date'].dt.day_name()
+  data = data.rename(columns={'visit_time': 'visits'})
+  data['day']=data['visit_date'].dt.day
+  data['month']=data['visit_date'].dt.month
+  data['year']=data['visit_date'].dt.year
+  data = pd.concat([data,pd.get_dummies(data['site']),pd.get_dummies(data['weekday'])], axis=1)
+  
+  #fig, ax = plt.subplots()
+  #sb.heatmap(data.corr(), ax=ax)
+  #st.write(fig)
 
 
-
-
+  fig = plt.figure(figsize=(16, 6))
+  sb.heatmap(data.corr(), vmin=-1, vmax=1, annot=True)
+  st.write(fig)
 
 
 
