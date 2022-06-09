@@ -9,6 +9,9 @@ import calendar
 import streamlit as st
 import streamlit_option_menu as stm
 import altair as alt
+#from sklearn import linear_model
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 
 #---------------------------------------------------------------------------------------------------
 ## FUNZIONI
@@ -442,6 +445,7 @@ if selected == 'Regression':
   week_2 = ['0_Monday','1_Tuesday','2_Wednesday','3_Thursday','4_Friday','5_Saturday','6_Sunday']
 
   sites = sorted(list(data_2014_2019['site'].unique()))
+  top_sites = ['Arena','Casa Giulietta','Castelvecchio','Duomo','Palazzo della Ragione','Santa Anastasia','Teatro Romano','Tomba Giulietta','Torre Lamberti']
 
   years = range(2014,2020)
 
@@ -457,27 +461,101 @@ if selected == 'Regression':
       2019: data_2019
     }
 
-  top_sites = ['Arena','Casa Giulietta','Castelvecchio','Duomo','Palazzo della Ragione','Santa Anastasia','Teatro Romano','Tomba Giulietta','Torre Lamberti']
-  data_14_19_filtered = data_2014_2019[data_2014_2019.site.isin(top_sites)].reset_index().drop(columns='index')
+  st.header('Motivations')
+  st.write('''
+          The last part of the project is about prediction.
+          As known, 2020 has been one of the most difficult year in modern history since COVID-19 spread all over the world and
+          for this all the affiliated sites with VeronaCard conventions has been closed for several months. In addition to this,
+          once the sites reopened to the public, many people that was usually coming to Verona during summer, wasn't in that specific year,
+          forced by the restrictions. For this reason, the aim of the project is the prediction of the number of visits for each
+          day in the year 2020, based on data coming from 2014 to 2019, as if COVID-19 hadn't been there.
+          ''')
+
+  st.header('Data Cleaning')
+  st.write('''
+          As explained above, the predictions are based on the data coming from 2014 to 2019, but the difference between the previous datasets
+          is that only the most renomated and visited sites that have been part of the conventions in all these years are considered.
+          The reason behind this decision is the fact that the accuracy of the predictions by doing this is higher.
+          These places are:
+          * Arena
+          * Basilica di Santa Anastasia
+          * Casa di Giulietta
+          * Castelvecchio
+          * Duomo
+          * Palazzo della Ragione
+          * Teatro Romano
+          * Tomba di Giulietta
+          * Torre dei Lamberti
+          ''')
+
+  # NEW DATASET
+  st.subheader('New Dataset')
+  data_14_19_filtered = data_2014_2019[data_2014_2019.site.isin(top_sites)].reset_index().drop(columns='index')  
+  st.write('Dataset dimensions:',str(data_14_19_filtered.shape[0]),'observations,',str(data_14_19_filtered.shape[1]),'variables')
+  st.dataframe(data_14_19_filtered)
+    
+  st.header('Regression')  
+
+  # TRAIN DATASET
   data = data_14_19_filtered.groupby(['visit_date','site']).count().reset_index()
-  data['weekday']=data['visit_date'].dt.day_name()
+  data['weekday'] = data['visit_date'].dt.day_name()
   data = data.rename(columns={'visit_time': 'visits'})
-  data['day']=data['visit_date'].dt.day
-  data['month']=data['visit_date'].dt.month
-  data['year']=data['visit_date'].dt.year
+  df_visits = data.copy()
+  data['day'] = data['visit_date'].dt.day
+  data['month'] = data['visit_date'].dt.month
+  data['year'] = data['visit_date'].dt.year
+  data = data.drop(columns='visit_date')
+  data = data[['visits','day','month','year','weekday','site']]
   data = pd.concat([data,pd.get_dummies(data['site']),pd.get_dummies(data['weekday'])], axis=1)
+  data = data.drop(columns = ['weekday','site'])
+
+  with st.expander('Train Dataset'):
+    st.subheader('Train Dataset')
+    st.write('Dataset dimensions:',str(data.shape[0]),'observations,',str(data.shape[1]),'variables')
+    st.dataframe(data)
   
-  #fig, ax = plt.subplots()
-  #sb.heatmap(data.corr(), ax=ax)
-  #st.write(fig)
+    fig = plt.figure(figsize=(16, 6))
+    sb.heatmap(data.corr(), vmin=-1, vmax=1, annot=True)
+    st.write(fig)
 
+  # TEST DATASET
+  year_2020 = pd.Series(pd.date_range("2020-1-1", periods=365, freq="D"))
+  list_year_2020 = [day for day in year_2020 for i in range(len(top_sites))]
 
-  fig = plt.figure(figsize=(16, 6))
-  sb.heatmap(data.corr(), vmin=-1, vmax=1, annot=True)
-  st.write(fig)
+  df_2020 = pd.DataFrame()
+  df_2020['visit_date'] = list_year_2020
+  df_2020['site'] = top_sites*365
+  df_2020['weekday'] = df_2020['visit_date'].dt.day_name()
+  df_2020['day'] = df_2020['visit_date'].dt.day
+  df_2020['month'] = df_2020['visit_date'].dt.month
+  df_2020['year'] = df_2020['visit_date'].dt.year
+  df_2020 = pd.concat([df_2020,pd.get_dummies(df_2020['site']),pd.get_dummies(df_2020['weekday'])], axis=1)
+  X_df_2020 = df_2020.drop(columns=['visit_date','site','weekday'])
 
+  with st.expander('Test Dataset'):
+    st.subheader('Test Dataset')
+    st.write('Dataset dimensions:',str(X_df_2020.shape[0]),'observations,',str(X_df_2020.shape[1]),'variables')
+    st.dataframe(X_df_2020)
 
+  X = data.drop(columns='visits')
+  y = data['visits']
+  linear_reg = LinearRegression().fit(X,y)
+  rf_reg = RandomForestRegressor(random_state = 42).fit(X, y)
 
+  linear_reg_results = linear_reg.predict(X_df_2020)
+  rf_reg_results = rf_reg.predict(X_df_2020)
+  df_2020['linear_reg_visits_hat'] = linear_reg_results
+  df_2020['rf_reg_visits_hat'] = rf_reg_results
+
+  site = st.selectbox('Choose the site:',top_sites)
+
+  st.bar_chart(df_2020[df_2020['site'] == site].groupby('month').sum()['rf_reg_visits_hat'])
+  #st.line_chart(df_2020[df_2020['site'] == site].groupby('month').sum()[['linear_reg_visits_hat','rf_reg_visits_hat']])
+
+  st.line_chart(df_2020[df_2020['site']==site].groupby('visit_date').sum()['rf_reg_visits_hat'])
+  st.line_chart(df_visits[(df_visits['site'] == site) & (df_visits['visit_date'].dt.year == 2017) ].groupby('visit_date').sum())
+  st.line_chart(pd.concat([df_2020[df_2020['site']==site].groupby('visit_date').sum()['rf_reg_visits_hat'],df_visits[(df_visits['site'] == site)].groupby('visit_date').sum()],axis = 1))
+  
 
 #https://dati.veneto.it/content/dati_veronacard_2014
 #https://dati.veneto.it/content/dati_veronacard_2015
