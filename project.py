@@ -337,10 +337,15 @@ if selected == 'Analysis':
 
   st.header('By year')
   if len(options) == 1:
-    st.write('**Total number of visits**:', str(int(sum(df_year[options[0]]))))
-    st.write('**Average number of visits per year**:', str(round(np.mean(df_year[options[0]]),2)))
-    st.write('**Year with the highest number of visits**:', str(2014+np.argmax(df_year[options[0]])))
-    st.write('**Highest number of visits**:', str(int(max(df_year[options[0]]))))
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Total visits", int(sum(df_year[options[0]])))
+    col2.metric("Avg visits per year", round(np.mean(df_year[options[0]]),2))
+    col3.metric("Highest number of visits", int(max(df_year[options[0]])))
+    col4.metric("Year with most number of visits", 2014+np.argmax(df_year[options[0]]))
+    #st.write('**Total number of visits**:', str(int(sum(df_year[options[0]]))))
+    #st.write('**Average number of visits per year**:', str(round(np.mean(df_year[options[0]]),2)))
+    #st.write('**Year with the highest number of visits**:', str(2014+np.argmax(df_year[options[0]])))
+    #st.write('**Highest number of visits**:', str(int(max(df_year[options[0]]))))
     st.bar_chart(df_year)
   else: 
     st.line_chart(df_year)
@@ -351,9 +356,13 @@ if selected == 'Analysis':
   df_month = pd.DataFrame(matrix, index = options, columns = months).T
 
   if len(options) == 1:
-    st.write('**Average number of visits per month**:', str(round(df_month[options[0]].mean(),2)))
-    st.write('**Month with the highest average number of visits**:', str(1+np.argmax(df_month[options[0]])) )
-    st.write('**Highest average number of visits**:', str(round(df_month[options[0]].max(),2)))
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Avg visits per month", round(df_month[options[0]].mean(),2))
+    col2.metric("Highest avg number of visits", round(df_month[options[0]].max(),2))
+    col3.metric("Month with most avg number of visits", datetime.strptime(str(1+np.argmax(df_month[options[0]])), "%m").strftime("%B"))
+    #st.write('**Average number of visits per month**:', str(round(df_month[options[0]].mean(),2)))
+    #st.write('**Highest average number of visits**:', str(round(df_month[options[0]].max(),2)))
+    #st.write('**Month with the highest average number of visits**:', str(1+np.argmax(df_month[options[0]])))
     st.bar_chart(df_month)
   else: 
     st.line_chart(df_month)
@@ -367,9 +376,13 @@ if selected == 'Analysis':
   df_weekday = pd.DataFrame(matrix, index = options, columns = week_2).T
 
   if len(options) == 1:
-    st.write('**Average number of visits per day of the week**:', str(round(df_weekday[options[0]].mean(),2)))
-    st.write('**Day of the week with the highest average number of visits**:', week[np.argmax(df_weekday[options[0]])])
-    st.write('**Highest average number of visits**:', str(round(df_weekday[options[0]].max(),2)))
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Avg visits per day of the week",round(df_weekday[options[0]].mean(),2))
+    col2.metric("Highest avg number of visits", round(df_weekday[options[0]].max(),2))
+    col3.metric("Day with most avg number of visits", week[np.argmax(df_weekday[options[0]])])
+    #st.write('**Average number of visits per day of the week**:', str(round(df_weekday[options[0]].mean(),2)))
+    #st.write('**Highest average number of visits**:', str(round(df_weekday[options[0]].max(),2)))
+    #st.write('**Day of the week with the highest average number of visits**:', week[np.argmax(df_weekday[options[0]])])
     st.bar_chart(df_weekday)
   else: 
     st.line_chart(df_weekday)
@@ -394,9 +407,13 @@ if selected == 'Analysis':
   df_hour = pd.DataFrame(avg_affluence, index = options,columns = range(8,20)).T
 
   if len(options) == 1:
-    st.write('**Average number of visits per hour**:', str(round(df_hour[options[0]].mean(),2)))
-    st.write('**Hour with the highest average number of visits**:', str(8+np.argmax(df_hour[options[0]])))
-    st.write('**Highest average number of visits**:', str(round(df_hour[options[0]].max(),2)))
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Avg visits per hour",round(df_hour[options[0]].mean(),2))
+    col2.metric("Highest avg number of visits", round(df_hour[options[0]].max(),2))
+    col3.metric("Hour with most avg number of visits", 8+np.argmax(df_hour[options[0]]))
+    #st.write('**Average number of visits per hour**:', str(round(df_hour[options[0]].mean(),2)))
+    #st.write('**Highest average number of visits**:', str(round(df_hour[options[0]].max(),2)))
+    #st.write('**Hour with the highest average number of visits**:', str(8+np.argmax(df_hour[options[0]])))
     st.bar_chart(df_hour)
   else: 
     st.line_chart(df_hour)
@@ -500,7 +517,7 @@ if selected == 'Regression':
   data = data_14_19_filtered.groupby(['visit_date','site']).count().reset_index()
   data['weekday'] = data['visit_date'].dt.day_name()
   data = data.rename(columns={'visit_time': 'visits'})
-  df_visits = data.copy()
+  visits_2014_2019 = data.copy()
   data['day'] = data['visit_date'].dt.day
   data['month'] = data['visit_date'].dt.month
   data['year'] = data['visit_date'].dt.year
@@ -531,31 +548,65 @@ if selected == 'Regression':
   df_2020['year'] = df_2020['visit_date'].dt.year
   df_2020 = pd.concat([df_2020,pd.get_dummies(df_2020['site']),pd.get_dummies(df_2020['weekday'])], axis=1)
   X_df_2020 = df_2020.drop(columns=['visit_date','site','weekday'])
+    
+  X = data.drop(columns='visits')
+  y = data['visits']
+  rf_reg = RandomForestRegressor(random_state = 42).fit(X, y)
+  rf_reg_results = rf_reg.predict(X_df_2020)
+  
+  X_df_2020['visits'] =rf_reg_results
+  X_df_2020 = X_df_2020[['visits']+[col for col in X_df_2020.columns if col != 'visits']]
+
+  df_2020['visits'] = rf_reg_results
+  df_2020 = df_2020[['visits']+[col for col in df_2020.columns if col != 'visits']]
 
   with st.expander('Test Dataset'):
     st.subheader('Test Dataset')
     st.write('Dataset dimensions:',str(X_df_2020.shape[0]),'observations,',str(X_df_2020.shape[1]),'variables')
     st.dataframe(X_df_2020)
 
-  X = data.drop(columns='visits')
-  y = data['visits']
-  linear_reg = LinearRegression().fit(X,y)
-  rf_reg = RandomForestRegressor(random_state = 42).fit(X, y)
+    fig = plt.figure(figsize=(16, 6))
+    sb.heatmap(X_df_2020.corr(), vmin=-1, vmax=1, annot=True)
+    st.write(fig)
 
-  linear_reg_results = linear_reg.predict(X_df_2020)
-  rf_reg_results = rf_reg.predict(X_df_2020)
-  df_2020['linear_reg_visits_hat'] = linear_reg_results
-  df_2020['rf_reg_visits_hat'] = rf_reg_results
+  st.header('Comparison through years')
 
-  site = st.selectbox('Choose the site:',top_sites)
-
-  st.bar_chart(df_2020[df_2020['site'] == site].groupby('month').sum()['rf_reg_visits_hat'])
-  #st.line_chart(df_2020[df_2020['site'] == site].groupby('month').sum()[['linear_reg_visits_hat','rf_reg_visits_hat']])
-
-  st.line_chart(df_2020[df_2020['site']==site].groupby('visit_date').sum()['rf_reg_visits_hat'])
-  st.line_chart(df_visits[(df_visits['site'] == site) & (df_visits['visit_date'].dt.year == 2017) ].groupby('visit_date').sum())
-  st.line_chart(pd.concat([df_2020[df_2020['site']==site].groupby('visit_date').sum()['rf_reg_visits_hat'],df_visits[(df_visits['site'] == site)].groupby('visit_date').sum()],axis = 1))
+  site = st.selectbox('Site:',top_sites)
+  visits_2014_2020_site = pd.concat([visits_2014_2019[(visits_2014_2019['site'] == site)],df_2020[df_2020['site']==site]])[['visit_date','site','visits','weekday']]
+  num = round(visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2020])
+  perc = 100*round((num-visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2019])/visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2019],2)
+  st.metric("2020 visits", num, "{}% (respect 2019)".format(perc))
+  st.bar_chart(visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum())
   
+  st.subheader('Months through years')
+  month = st.selectbox('Month:',list(months))
+  a = visits_2014_2020_site[visits_2014_2020_site['visit_date'].dt.month == month]
+  month_name = datetime.strptime(str(month), "%m").strftime("%B")
+  num = round(a.groupby([a['visit_date'].dt.year]).sum()['visits'][2020])
+  perc = 100*round((num-a.groupby([a['visit_date'].dt.year]).sum()['visits'][2019])/a.groupby([a['visit_date'].dt.year]).sum()['visits'][2019],2)
+  st.metric("{} visits".format(month_name), num, "{}% (respect 2019)".format(perc))
+  st.bar_chart(a.groupby([a['visit_date'].dt.year]).sum())
+
+  st.subheader('Days of the week through years')
+  weekday = st.selectbox('Day of the week:',week)
+  b = a[a['weekday'] == weekday]
+  num = round(b.groupby([b['visit_date'].dt.year]).sum()['visits'][2020])
+  perc = 100*round((num-b.groupby([b['visit_date'].dt.year]).sum()['visits'][2019])/b.groupby([b['visit_date'].dt.year]).sum()['visits'][2019],2)
+  st.metric("{} visits".format(weekday), num, "{}% (respect 2019)".format(perc))
+  st.bar_chart(b.groupby([b['visit_date'].dt.year]).sum())
+
+
+  
+  #st.line_chart(df_2020[df_2020['site'] == site].groupby('visit_date').sum()['visits'])
+  #st.bar_chart(df_2020[df_2020['site'] == site].groupby('month').sum()['visits'])
+  #a = df_2020[df_2020['site']==site].groupby('weekday').mean().reindex(week).reset_index()
+  #a['weekday'] = week_2
+  #st.bar_chart(a.groupby('weekday').sum()['visits'])
+  
+
+
+
+
 
 #https://dati.veneto.it/content/dati_veronacard_2014
 #https://dati.veneto.it/content/dati_veronacard_2015
