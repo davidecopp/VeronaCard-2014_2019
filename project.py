@@ -126,7 +126,7 @@ if selected == 'Homepage':
     st.header('Datasets')
     st.write('''
             In order to analyze the usage of the VeronaCards through the years
-            the datasets from 2014 to 2020 has been downloaded from the link: 
+            the datasets from 2014 to 2019 has been downloaded from the link: 
             https://dati.veneto.it/catalogo-opendata/comune_di_verona_311.
             ''')  
     st.write('''
@@ -392,25 +392,12 @@ if selected == 'Regression':
 
   week_2 = ['0_Monday','1_Tuesday','2_Wednesday','3_Thursday','4_Friday','5_Saturday','6_Sunday']
 
-  sites = sorted(list(data_2014_2019['site'].unique()))
   top_sites = ['Arena','Casa Giulietta','Castelvecchio','Duomo','Palazzo della Ragione','Santa Anastasia','Teatro Romano','Tomba Giulietta','Torre Lamberti']
-
-  years = range(2014,2020)
 
   months = range(1,13)
 
-  dataframes = {
-      'Not Specified': data_2014_2019,
-      2014: data_2014,
-      2015: data_2015,
-      2016: data_2016,
-      2017: data_2017,
-      2018: data_2018,
-      2019: data_2019
-    }
-
   # Purposes
-  st.header('Purposes')
+  st.header('Purpose')
   st.write('''
           The last part of the project is about prediction.
           As known, 2020 has been one of the most difficult year in modern history since COVID-19 spread all over the world and,
@@ -516,7 +503,7 @@ if selected == 'Regression':
   st.header('Comparison through years')
 
   site = st.selectbox('Site:',top_sites)
-  visits_2014_2020_site = pd.concat([visits_2014_2019[(visits_2014_2019['site'] == site)],df_2020[df_2020['site']==site]])[['visit_date','site','visits','weekday']]
+  visits_2014_2020_site = pd.concat([visits_2014_2019[(visits_2014_2019['site'] == site)], df_2020[df_2020['site'] == site]])[['visit_date','site','visits','weekday']]
   num = round(visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2020])
   perc = 100*round((num-visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2019])/visits_2014_2020_site.groupby([visits_2014_2020_site['visit_date'].dt.year]).sum()['visits'][2019],2)
   st.metric("2020 visits", num, "{}% (respect 2019)".format(perc))
