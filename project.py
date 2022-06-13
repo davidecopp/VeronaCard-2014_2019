@@ -114,23 +114,23 @@ if selected == 'Homepage':
             What are the purposes of this project? This project wants to analyze the usage of the VeronaCards 
             in order to reach some conclusions on what is the behaviour of the affluences in different periods of time and different site. 
             More precisely, the purposes of the project are:
-            * understanding how affluences changes depending on the **day of the week**
-            * understanding how affluences changes depending on the **year**
-            * understanding how affluences changes depending on the **month**
-            * understanding how affluences changes depending on a **specified date**
-            * understanding how affluences changes depending on the **site**
-            * foretelling the affluences of 2021 per units of time and per site
+            * understanding how affluences change depending on the **site**
+            * understanding how affluences change depending on the **year**
+            * understanding how affluences change depending on the **month**
+            * understanding how affluences change depending on the **day of the week**
+            * understanding how affluences change depending on a **specified date**
+            * predicting the affluences of 2021 per units of time and per site
             ''')
   
   with st.container():
     st.header('Datasets')
     st.write('''
-            In order to analyze the usage of the VeronaCards through the years
-            the datasets from 2014 to 2019 has been downloaded from the link: 
+            In order to analyze the usage of the VeronaCards through the years,
+            the datasets from 2014 to 2019 have been downloaded from the link: 
             https://dati.veneto.it/catalogo-opendata/comune_di_verona_311.
             ''')  
     st.write('''
-            This is how they looks:
+            This is how they look:
             ''')
 
     # Uploading Datasets
@@ -174,7 +174,7 @@ if selected == 'Data Cleaning':
     st.write('''
             This is how the original dataset is constructed. A notable fact is that some columns are
             useless for the project: ***id_veronacard***, ***profilo***, ***data_attivazione***, ***sito_latitudine***,
-            ***sito_longitudine*** has to be dropped.
+            ***sito_longitudine*** have to be dropped.
             ''')
     data_2014 = pd.read_csv('veronacard_2014_opendata.csv')
     st.dataframe(data_2014)
@@ -194,8 +194,8 @@ if selected == 'Data Cleaning':
   with st.container():
     st.subheader('Format column conversion and column addition')
     st.write('''
-            In the previous steps the column data_visita has string-format, which is not the best format in order to be ready 
-            to select just one between the day, the month and the year. So, it is advisable to convert that column to a datetime-format. 
+            In the previous steps the column ***data_visita*** has string-format, which is not the best format in order to be ready 
+            to select just one unit of time between the day, the month and the year. So, it is advisable to convert that column to a datetime-format. 
             Moreover, because of the project purpose, it is useful to add the weekday column: it represents the day of the week 
             corresponding to the date. 
             ''')
@@ -308,7 +308,16 @@ if selected == 'Analysis':
   # By day of the week
   st.header('By day of the week')
   month = st.selectbox('Month:',['Not Specified']+list(months))
-  matrix = [[len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site).groupby('visit_date')) for weekday in range(0,7)] for site in options]
+
+  matrix = np.zeros((len(options),7))
+  for site,i in zip(options,range(len(options))):
+    for weekday,j in zip(range(0,7),range(7)):
+      try:
+        avg = len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site))/len(df_by_day_month_year_site_weekday('Not Specified',month,year,weekday,site).groupby('visit_date'))
+      except ZeroDivisionError:
+        avg = 0
+      matrix[i,j] = avg
+
   df_weekday = pd.DataFrame(matrix, index = options, columns = week_2).T
 
   if len(options) == 1:
@@ -451,8 +460,8 @@ if selected == 'Regression':
   y = data['visits']
   X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.25,random_state=2)
   c1,c2 = st.columns(2)
-  c1.metric('Linear Regression R^2', round(LinearRegression().fit(X_train,y_train).score(X_test,y_test),2))
-  c2.metric('Random Forest Regression R^2', round(RandomForestRegressor(random_state = 1).fit(X_train,y_train).score(X_test,y_test),2))
+  c1.metric('Linear Regression R^2', "{}%".format(100*round(LinearRegression().fit(X_train,y_train).score(X_test,y_test),3)))
+  c2.metric('Random Forest Regression R^2', "{}%".format(100*round(RandomForestRegressor(random_state = 1).fit(X_train,y_train).score(X_test,y_test),3)))
 
   if regression == 'Linear Regression':
     reg = LinearRegression().fit(X,y)
