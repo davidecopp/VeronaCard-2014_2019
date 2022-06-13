@@ -4,12 +4,8 @@ import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
 from datetime import datetime
-from datetime import date
-import calendar
 import streamlit as st
 import streamlit_option_menu as stm
-import altair as alt
-#from sklearn import linear_model
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -67,7 +63,7 @@ with st.sidebar:
 
 if selected == 'Homepage':
 
-  st.title('Verona Card - Homepage')
+  st.title('VeronaCard - Homepage')
 
   with st.container():
     st.header('Introduction')
@@ -109,7 +105,7 @@ if selected == 'Homepage':
               ''')
   
   with st.container():
-    st.header('Topics')
+    st.header('Goals')
     st.write('''
             What are the purposes of this project? This project wants to analyze the usage of the VeronaCards 
             in order to reach some conclusions on what is the behaviour of the affluences in different periods of time and different site. 
@@ -160,7 +156,7 @@ if selected == 'Homepage':
 ## DATA CLEANING
 
 if selected == 'Data Cleaning': 
-  st.title('Verona Card Utilizzo - Data Cleaning')
+  st.title('VeronaCard - Data Cleaning')
   st.write('''
           In order to make an analysis of the VeronaCards usage, the first useful thing to do 
           is cleaning the data. In this way it is possible to keep in memory only what does make 
@@ -272,7 +268,7 @@ if selected == 'Analysis':
       2019: data_2019
     }
 
-  st.title('Verona Card Utilizzo - Analysis')
+  st.title('VeronaCard - Analysis')
   options = st.multiselect('Choose the site to analyze or the sites to compare:',sites,'Arena')
 
   # By year
@@ -361,7 +357,7 @@ if selected == 'Analysis':
 #-------------------------------------------------------------------------------------------------------
 ## QUARTA PAGINA
 if selected == 'Regression':
-  st.title('Verona Card Utilizzo - Regression')
+  st.title('VeronaCard - Regression')
 
   data_2014 = pd.read_csv('data_2014.csv')
   data_2015 = pd.read_csv('data_2015.csv')
