@@ -354,7 +354,7 @@ if selected == 'Analysis':
     st.line_chart(df_hour)
 
 #-------------------------------------------------------------------------------------------------------
-## QUARTA PAGINA
+## REGRESSION
 if selected == 'Regression':
   st.title('VeronaCard - Regression')
 
