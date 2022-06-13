@@ -1,4 +1,3 @@
-from re import S
 import pandas as pd
 import numpy as np
 import seaborn as sb
@@ -56,7 +55,7 @@ def str_to_dectime(day,month,year,weekday,site):
 ## SIDEBAR
 
 with st.sidebar:
-  selected = stm.option_menu("Main Menu", ['Homepage','Data Cleaning','Analysis','Regression'], default_index=0)
+  selected = stm.option_menu("Menu", ['Homepage','Data Cleaning','Analysis','Regression'], default_index=0)
 
 #------------------------------------------------------------------------------------------------------
 ## HOMEPAGE
